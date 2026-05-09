@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #0A2540;
+  --color-brand-orange: #F97316;
+  --color-brand-green: #22C55E;
+  --color-brand-white: #ffffff;
+}
+
+@layer base {
+  body {
+    background-color: #ffffff;
+    @apply text-brand-blue;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .premium-hindi-heading {
+    font-family: 'Tiro Devanagari Hindi', serif;
+    @apply tracking-normal leading-[1.4] text-brand-blue;
+    background: linear-gradient(135deg, #0A2540 0%, #1e40af 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .section-container {
+    @apply max-w-7xl mx-auto px-6;
+  }
+
+  .premium-card {
+    @apply bg-white border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2rem] transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-brand-orange text-white px-10 py-5 rounded-xl font-black text-xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-blue text-white px-10 py-5 rounded-xl font-black text-xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all;
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+html {
+  scroll-behavior: smooth;
+}
