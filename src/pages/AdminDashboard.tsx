@@ -7,23 +7,19 @@ import {
   LogOut, 
   Plus, 
   Trash2, 
-  Clock, 
   Phone,
   Calendar,
   LucideImage,
   Upload,
   Link as LinkIcon,
-  Sparkles,
   Camera,
-  Image as ImageIcon,
-  ArrowRight,
-  UploadCloud
+  ArrowRight
 } from "lucide-react";
 import SectionContainer from "../components/ui/SectionContainer";
 import SEO from "../components/ui/SEO";
 
 // FIREBASE IMPORTS
-import { auth, db, storage } from "../firebase";
+import { auth, db } from "../firebase";
 import { 
   signOut, 
   onAuthStateChanged 
@@ -39,11 +35,6 @@ import {
   addDoc, 
   serverTimestamp 
 } from "firebase/firestore";
-import { 
-  ref, 
-  uploadBytesResumable, 
-  getDownloadURL 
-} from "firebase/storage";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("inquiries");
@@ -68,8 +59,8 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   // CLOUDINARY SETTINGS
-  const CLOUDINARY_CLOUD_NAME = "dsrqhkgml"; 
-  const CLOUDINARY_UPLOAD_PRESET = "school_gallery"; 
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME; 
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET; 
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -82,16 +73,13 @@ const AdminDashboard = () => {
 
     const setupListener = (collectionName: string, setter: Function) => {
       const q = query(collection(db, collectionName), orderBy("timestamp", "desc"));
-      return onSnapshot(q, 
-        (snapshot) => {
-          setter(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-          setLoading(false);
-        }, 
-        (err) => {
-          console.error(`Firebase Error (${collectionName}):`, err.message);
-          setLoading(false);
-        }
-      );
+      return onSnapshot(q, (snapshot) => {
+        setter(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLoading(false);
+      }, (err) => {
+        console.error(`Firebase Error:`, err.message);
+        setLoading(false);
+      });
     };
 
     const unsubInq = setupListener("inquiries", setInquiries);
@@ -106,7 +94,6 @@ const AdminDashboard = () => {
     };
   }, [navigate]);
 
-  // Handle local file selection and preview
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -131,12 +118,12 @@ const AdminDashboard = () => {
   };
 
   const deleteNotice = async (id: string) => {
-    if (!confirm("Are you sure?")) return;
+    if (!confirm("Delete notice?")) return;
     await deleteDoc(doc(db, "notices", id));
   };
 
   const deleteGalleryItem = async (id: string) => {
-    if (!confirm("Remove this image from gallery?")) return;
+    if (!confirm("Remove this image?")) return;
     await deleteDoc(doc(db, "gallery", id));
   };
 
@@ -163,7 +150,7 @@ const AdminDashboard = () => {
         });
         setShowGalleryForm(false);
         setNewImage({ url: "", title: "", category: "Campus" });
-      } catch (err: any) { alert("URL Post Error: " + err.message); }
+      } catch (err: any) { alert("Gallery URL Error: " + err.message); }
     } else {
       if (!selectedFile) return;
       setIsUploading(true);
@@ -206,12 +193,11 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 pb-20 font-sans text-brand-blue">
       <SEO title="Admin Dashboard" />
       
-      {/* --- DASHBOARD HEADER --- */}
       <div className="bg-brand-blue text-white py-10 shadow-prestige-lg">
         <SectionContainer className="!py-0 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="space-y-1 text-center md:text-left">
              <h1 className="text-3xl font-black uppercase tracking-tighter">Admin Dashboard</h1>
-             <p className="text-brand-orange font-bold text-xs uppercase tracking-[0.4em]">Education Junction Control</p>
+             <p className="text-brand-orange font-bold text-xs uppercase tracking-[0.4em]">Education Junction - {adminEmail?.split('@')[0]}</p>
           </div>
           <button onClick={handleLogout} className="bg-white/10 hover:bg-red-500/20 px-6 py-3 rounded-xl font-bold flex items-center gap-3 border border-white/10 transition-all">
              <LogOut size={18} /> Logout
@@ -220,7 +206,6 @@ const AdminDashboard = () => {
       </div>
 
       <SectionContainer className="mt-10">
-         {/* TABS */}
          <div className="flex gap-4 mb-10 overflow-x-auto pb-4 no-scrollbar">
             {[
               { id: "inquiries", label: "Inquiries", icon: <Users size={20} /> },
@@ -244,11 +229,10 @@ const AdminDashboard = () => {
          {loading ? (
             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
                <div className="w-12 h-12 bg-brand-orange rounded-full mb-4" />
-               <p className="font-black text-gray-400 uppercase tracking-widest text-xs italic">Syncing with Cloud...</p>
+               <p className="font-black text-gray-400 uppercase tracking-widest text-xs italic">Connecting Securely...</p>
             </div>
          ) : (
            <AnimatePresence mode="wait">
-             {/* INQUIRIES TAB */}
              {activeTab === "inquiries" && (
                <motion.div key="inq" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
                  <h2 className="text-2xl font-black uppercase tracking-tighter">Admission Leads ({inquiries.length})</h2>
@@ -280,7 +264,6 @@ const AdminDashboard = () => {
                </motion.div>
              )}
 
-             {/* NOTICES TAB */}
              {activeTab === "notices" && (
                <motion.div key="notice" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
                  <div className="flex justify-between items-center">
@@ -319,7 +302,6 @@ const AdminDashboard = () => {
                </motion.div>
              )}
 
-             {/* GALLERY TAB */}
              {activeTab === "gallery" && (
                <motion.div key="gallery" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
                  <div className="flex justify-between items-center">
@@ -331,7 +313,6 @@ const AdminDashboard = () => {
                  
                  {showGalleryForm && (
                    <form onSubmit={postGalleryItem} className="bg-white p-8 lg:p-12 rounded-[2.5rem] border-2 border-brand-orange/20 shadow-2xl space-y-10">
-                      {/* Method Toggle */}
                       <div className="flex gap-4 p-2 bg-gray-50 rounded-2xl w-fit">
                          <button type="button" onClick={() => setGalleryFormMethod("upload")} className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black transition-all ${galleryMethod === "upload" ? "bg-brand-blue text-white shadow-lg" : "text-gray-400 hover:text-brand-blue"}`}>
                             <Upload size={16} /> FROM SYSTEM
@@ -342,7 +323,6 @@ const AdminDashboard = () => {
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                         {/* Image Section */}
                          <div className="space-y-6">
                             {galleryMethod === "upload" ? (
                                <div className="space-y-4">
@@ -369,7 +349,6 @@ const AdminDashboard = () => {
                             )}
                          </div>
 
-                         {/* Preview Section */}
                          <div className="space-y-8">
                             <div className="space-y-4">
                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">System Preview</label>
@@ -430,13 +409,6 @@ const AdminDashboard = () => {
                          </div>
                       </div>
                     ))}
-                    {galleryItems.length === 0 && !showGalleryForm && (
-                      <div className="col-span-full py-20 text-center bg-white rounded-prestige border-2 border-dashed border-gray-100">
-                         <LucideImage className="mx-auto text-gray-100 mb-4" size={60} />
-                         <p className="font-bold text-gray-300 uppercase tracking-widest leading-none">Cloud Gallery Empty</p>
-                         <p className="text-[10px] text-gray-400 mt-2 font-sans">(Using original school sample images)</p>
-                      </div>
-                    )}
                  </div>
                </motion.div>
              )}
